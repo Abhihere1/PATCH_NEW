@@ -270,7 +270,10 @@ export default function MainPage() {
 
             {/* Welcome */}
             <div data-testid="hero-welcome" className="text-center">
-              
+              <h1 data-testid="hero-heading" className="text-2xl font-semibold text-gray-900">
+                Welcome to the Discount Tire Information Center,{" "}
+                <span data-testid="hero-username" className="text-red-600">{displayName}</span>.
+              </h1>
               <p data-testid="hero-subtitle" className="text-sm text-gray-500 mt-1">
                 Select a category below or type your question to get started.
               </p>
