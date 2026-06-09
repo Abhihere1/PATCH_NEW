@@ -1,8 +1,8 @@
-// Ticket: PATCH-2
+// Ticket: PATCH-20
 import { test, expect } from '@playwright/test';
 import { ensureUserExists, loginAs, TEST_USER } from './helpers';
 
-test.describe('PATCH-2: Main Page landing experience', () => {
+test.describe('PATCH-20: Main Page landing experience', () => {
   test.beforeEach(async ({ page }) => {
     await ensureUserExists(page);
     await loginAs(page);
@@ -40,8 +40,9 @@ test.describe('PATCH-2: Main Page landing experience', () => {
     // For our test user, username is set; verify the welcome uses some identifier derived from the account
     const welcome = page.getByTestId('hero-welcome');
     await expect(welcome).toBeVisible();
-    // Either the username or email prefix should appear
     const emailPrefix = TEST_USER.email.split('@')[0];
+    // Wait for async /api/auth/me to resolve and populate displayName (not the "Associate" fallback)
+    await expect(welcome).toContainText(new RegExp(`${TEST_USER.username}|${emailPrefix}`));
     const welcomeText = await welcome.textContent();
     const hasUsername = welcomeText?.includes(TEST_USER.username) ?? false;
     const hasEmailPrefix = welcomeText?.includes(emailPrefix) ?? false;
