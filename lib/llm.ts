@@ -66,9 +66,19 @@ export async function callLLM(
   history: ConversationMessage[],
   userMessage: string
 ): Promise<LLMResponseSchema> {
-  const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
-  const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? "gemma4:31b-cloud";
-  const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY ?? "";
+  const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL;
+  const OLLAMA_MODEL = process.env.OLLAMA_MODEL;
+  const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY;
+
+  if (!OLLAMA_BASE_URL) {
+    throw new Error("Configuration error: OLLAMA_BASE_URL environment variable is not set.");
+  }
+  if (!OLLAMA_MODEL) {
+    throw new Error("Configuration error: OLLAMA_MODEL environment variable is not set.");
+  }
+  if (!OLLAMA_API_KEY) {
+    throw new Error("Configuration error: OLLAMA_API_KEY environment variable is not set.");
+  }
 
   const messages: { role: string; content: string }[] = [
     {
@@ -81,8 +91,10 @@ export async function callLLM(
     { role: "user", content: userMessage },
   ];
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${OLLAMA_API_KEY}`,
+  };
 
   const res = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
     method: "POST",
