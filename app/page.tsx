@@ -45,6 +45,7 @@ export default function MainPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [activeIncident, setActiveIncident] = useState<IncidentData | null>(null);
   const [vdiKBAvailable, setVdiKBAvailable] = useState<boolean | null>(null);
+  const [scannerKBAvailable, setScannerKBAvailable] = useState<boolean | null>(null);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -66,6 +67,13 @@ export default function MainPage() {
       .then((r) => r.json())
       .then((d) => setVdiKBAvailable(d.available))
       .catch(() => setVdiKBAvailable(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/kb/status?category=scanner")
+      .then((r) => r.json())
+      .then((d) => setScannerKBAvailable(d.available))
+      .catch(() => setScannerKBAvailable(false));
   }, []);
 
   async function fetchAndResumeIncident(incidentId: string) {
@@ -124,7 +132,7 @@ export default function MainPage() {
   }, []);
 
   const sendMessage = useCallback(
-    async (text: string, controlMessageId?: string) => {
+    async (text: string, controlMessageId?: string, incidentCategory?: string) => {
       if (!text.trim() || isSending || isTyping) return;
       if (activeIncident && activeIncident.status !== "Open") return;
 
@@ -146,7 +154,8 @@ export default function MainPage() {
 
       // Create incident on first message
       if (!currentIncident) {
-        const newIncident = await createIncident("");
+        const category = incidentCategory ?? "";
+        const newIncident = await createIncident(category);
         if (!newIncident) {
           setIsTyping(false);
           setIsSending(false);
@@ -155,7 +164,7 @@ export default function MainPage() {
         currentIncident = {
           incident_id: newIncident.incident_id,
           status: "Open",
-          category: "",
+          category,
           user_email: user?.email,
           createdAt: newIncident.createdAt,
         };
@@ -227,7 +236,11 @@ export default function MainPage() {
   }
 
   function handleTileClick() {
-    sendMessage("I have a problem with my VDI");
+    sendMessage("I have a problem with my VDI", undefined, "VDI");
+  }
+
+  function handleScannerTileClick() {
+    sendMessage("I have a problem with my Scanner", undefined, "Scanner");
   }
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -279,35 +292,68 @@ export default function MainPage() {
               </p>
             </div>
 
-            {/* VDI Tile */}
-            <button
-              data-testid="vdi-tile"
-              onClick={handleTileClick}
-              className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white px-10 py-8 shadow-sm transition-all duration-150 hover:shadow-md hover:border-red-300"
-              style={{ minWidth: "200px" }}
-            >
-              <div
-                data-testid="vdi-tile-icon"
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                style={{ background: "#FEF2F2" }}
+            {/* Category Tiles */}
+            <div data-testid="category-tiles" className="flex flex-row gap-4 justify-center flex-wrap">
+              {/* VDI Tile */}
+              <button
+                data-testid="vdi-tile"
+                onClick={handleTileClick}
+                className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white px-10 py-8 shadow-sm transition-all duration-150 hover:shadow-md hover:border-red-300"
+                style={{ minWidth: "200px" }}
               >
-                🖥
-              </div>
-              <span data-testid="vdi-tile-label" className="font-semibold text-gray-900 text-sm">
-                VDI
-              </span>
-              <span
-                data-testid="vdi-kb-badge"
-                className="rounded-full px-2.5 py-0.5 text-xs font-medium"
-                style={{
-                  background: vdiKBAvailable ? "#f0fdf4" : "#f9fafb",
-                  color: vdiKBAvailable ? "#16a34a" : "#6b7280",
-                  border: `1px solid ${vdiKBAvailable ? "#86efac" : "#e5e7eb"}`,
-                }}
+                <div
+                  data-testid="vdi-tile-icon"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                  style={{ background: "#FEF2F2" }}
+                >
+                  🖥
+                </div>
+                <span data-testid="vdi-tile-label" className="font-semibold text-gray-900 text-sm">
+                  VDI
+                </span>
+                <span
+                  data-testid="vdi-kb-badge"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  style={{
+                    background: vdiKBAvailable ? "#f0fdf4" : "#f9fafb",
+                    color: vdiKBAvailable ? "#16a34a" : "#6b7280",
+                    border: `1px solid ${vdiKBAvailable ? "#86efac" : "#e5e7eb"}`,
+                  }}
+                >
+                  {vdiKBAvailable === null ? "Checking…" : vdiKBAvailable ? "KB Available" : "KB Missing"}
+                </span>
+              </button>
+
+              {/* Scanner Tile */}
+              <button
+                data-testid="scanner-tile"
+                onClick={handleScannerTileClick}
+                className="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white px-10 py-8 shadow-sm transition-all duration-150 hover:shadow-md hover:border-red-300"
+                style={{ minWidth: "200px" }}
               >
-                {vdiKBAvailable === null ? "Checking…" : vdiKBAvailable ? "KB Available" : "KB Missing"}
-              </span>
-            </button>
+                <div
+                  data-testid="scanner-tile-icon"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                  style={{ background: "#FEF2F2" }}
+                >
+                  📷
+                </div>
+                <span data-testid="scanner-tile-label" className="font-semibold text-gray-900 text-sm">
+                  Scanner
+                </span>
+                <span
+                  data-testid="scanner-kb-badge"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  style={{
+                    background: scannerKBAvailable ? "#f0fdf4" : "#f9fafb",
+                    color: scannerKBAvailable ? "#16a34a" : "#6b7280",
+                    border: `1px solid ${scannerKBAvailable ? "#86efac" : "#e5e7eb"}`,
+                  }}
+                >
+                  {scannerKBAvailable === null ? "Checking…" : scannerKBAvailable ? "KB Available" : "KB Missing"}
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* Composer at bottom */}
