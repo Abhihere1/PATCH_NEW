@@ -122,7 +122,12 @@ export async function POST(req: NextRequest) {
       incident_id: incident.incident_id,
     });
   } catch (err) {
-    console.error("[chat]", err);
-    return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[chat]", message, err);
+    const isConfig = message.startsWith("Configuration error:");
+    return NextResponse.json(
+      { error: isConfig ? message : "An unexpected error occurred. Please try again." },
+      { status: 500 }
+    );
   }
 }
