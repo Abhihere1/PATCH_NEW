@@ -82,7 +82,7 @@ export async function callLLM(
   ];
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (OLLAMA_API_KEY) headers["Authorization"] = `Bearer ${OLLAMA_API_KEY}`;
+
 
   const res = await fetch(`${OLLAMA_BASE_URL}/v1/chat/completions`, {
     method: "POST",
